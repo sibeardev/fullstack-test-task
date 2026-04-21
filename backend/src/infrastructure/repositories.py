@@ -14,6 +14,14 @@ class AlertRepository:
             )
             return list(result.scalars().all())
 
+    async def create_alert(self, file_id: str, level: str, message: str) -> Alert:
+        async with async_session_maker() as session:
+            alert = Alert(file_id=file_id, level=level, message=message)
+            session.add(alert)
+            await session.commit()
+            await session.refresh(alert)
+            return alert
+
 
 class StoredFileRepository:
     async def list_files(self) -> list[StoredFile]:

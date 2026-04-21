@@ -10,8 +10,9 @@ from src.core.config import (
     STORAGE_DIR,
     VALID_PDF_MIME_TYPES,
 )
-from src.infrastructure.db.models import Alert, StoredFile
+from src.infrastructure.db.models import StoredFile
 from src.infrastructure.db.session import async_session_maker
+from src.infrastructure.repositories import AlertRepository, StoredFileRepository
 
 _worker_loop: asyncio.AbstractEventLoop | None = None
 
@@ -91,28 +92,24 @@ async def _extract_file_metadata(file_id: str) -> None:
 
 
 async def _send_file_alert(file_id: str) -> None:
-    async with async_session_maker() as session:
-        file_item = await session.get(StoredFile, file_id)
-        if not file_item:
-            return
-
-        if file_item.processing_status == "failed":
-            alert = Alert(
-                file_id=file_id, level="critical", message="File processing failed"
-            )
-        elif file_item.requires_attention:
-            alert = Alert(
-                file_id=file_id,
-                level="warning",
-                message=f"File requires attention: {file_item.scan_details}",
-            )
-        else:
-            alert = Alert(
-                file_id=file_id, level="info", message="File processed successfully"
-            )
-
-        session.add(alert)
-        await session.commit()
+    file_item = await StoredFileRepository().get_file(file_id)
+    if not file_item:
+        return
+    alert_repository = AlertRepository()
+    if file_item.processing_status == "failed":
+        await alert_repository.create_alert(
+            file_id=file_id, level="critical", message="File processing failed"
+        )
+    elif file_item.requires_attention:
+        await alert_repository.create_alert(
+            file_id=file_id,
+            level="warning",
+            message=f"File requires attention: {file_item.scan_details}",
+        )
+    else:
+        await alert_repository.create_alert(
+            file_id=file_id, level="info", message="File processed successfully"
+        )
 
 
 @celery_app.task

@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import HTTPException, UploadFile, status
 
 from src.core.config import DEFAULT_MIME_TYPE, STORAGE_DIR
-from src.infrastructure.db.models import Alert, StoredFile
+from src.infrastructure.db.models import StoredFile
 from src.infrastructure.db.session import async_session_maker
 from src.infrastructure.repositories import StoredFileRepository
 
@@ -49,12 +49,3 @@ async def get_file_path(file_id: str) -> tuple[StoredFile, Path]:
             status_code=status.HTTP_404_NOT_FOUND, detail="Stored file not found"
         )
     return file_item, stored_path
-
-
-async def create_alert(file_id: str, level: str, message: str) -> Alert:
-    alert = Alert(file_id=file_id, level=level, message=message)
-    async with async_session_maker() as session:
-        session.add(alert)
-        await session.commit()
-        await session.refresh(alert)
-        return alert

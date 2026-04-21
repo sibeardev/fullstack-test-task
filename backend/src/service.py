@@ -41,20 +41,6 @@ async def create_file(title: str, upload_file: UploadFile) -> StoredFile:
     return file_item
 
 
-async def delete_file(file_id: str) -> None:
-    async with async_session_maker() as session:
-        file_item = await session.get(StoredFile, file_id)
-        if not file_item:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
-            )
-        stored_path = STORAGE_DIR / file_item.stored_name
-        if stored_path.exists():
-            stored_path.unlink()
-        await session.delete(file_item)
-        await session.commit()
-
-
 async def get_file_path(file_id: str) -> tuple[StoredFile, Path]:
     file_item = await StoredFileRepository().get_file(file_id)
     stored_path = STORAGE_DIR / file_item.stored_name

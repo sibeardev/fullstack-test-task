@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy import select
 
+from src.core.config import STORAGE_DIR
 from src.infrastructure.db.models import Alert, StoredFile
 from src.infrastructure.db.session import async_session_maker
 
@@ -31,7 +32,7 @@ class StoredFileRepository:
                 )
             return file_item
 
-    async def update_file(file_id: str, title: str) -> StoredFile:
+    async def update_file(self, file_id: str, title: str) -> StoredFile:
         async with async_session_maker() as session:
             file_item = await session.get(StoredFile, file_id)
             if not file_item:
@@ -42,3 +43,16 @@ class StoredFileRepository:
             await session.commit()
             await session.refresh(file_item)
             return file_item
+
+    async def delete_file(self, file_id: str) -> None:
+        async with async_session_maker() as session:
+            file_item = await session.get(StoredFile, file_id)
+            if not file_item:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
+                )
+            stored_path = STORAGE_DIR / file_item.stored_name
+            if stored_path.exists():
+                stored_path.unlink()
+            await session.delete(file_item)
+            await session.commit()

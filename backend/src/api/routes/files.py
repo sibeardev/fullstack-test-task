@@ -5,7 +5,7 @@ from src.api.schemas.files import FileItem, FileUpdate
 from src.application.use_cases.upload_file import create_file
 from src.infrastructure.repositories import StoredFileRepository
 from src.infrastructure.storage.local_storage import get_file_path
-from src.workers.tasks import scan_file_for_threats
+from src.workers.tasks import scan_file_for_threats_task
 
 files_router = APIRouter(prefix="/files", tags=["files"])
 
@@ -21,7 +21,7 @@ async def create_file_view(
     file: UploadFile = File(...),
 ):
     file_item = await create_file(title=title, upload_file=file)
-    scan_file_for_threats.delay(file_item.id)
+    scan_file_for_threats_task.delay(file_item.id)
     return file_item
 
 

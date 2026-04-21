@@ -5,7 +5,7 @@ from starlette import status
 from src.api.schemas.files import FileItem, FileUpdate
 from src.core.config import STORAGE_DIR
 from src.infrastructure.repositories import StoredFileRepository
-from src.service import create_file, delete_file, update_file
+from src.service import create_file, delete_file
 from src.workers.tasks import scan_file_for_threats
 
 files_router = APIRouter(prefix="/files", tags=["files"])
@@ -36,7 +36,7 @@ async def update_file_view(
     file_id: str,
     payload: FileUpdate,
 ):
-    return await update_file(file_id=file_id, title=payload.title)
+    return await StoredFileRepository().update_file(file_id=file_id, title=payload.title)
 
 
 @files_router.get("/{file_id}/download")

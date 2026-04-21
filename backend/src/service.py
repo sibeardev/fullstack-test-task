@@ -41,19 +41,6 @@ async def create_file(title: str, upload_file: UploadFile) -> StoredFile:
     return file_item
 
 
-async def update_file(file_id: str, title: str) -> StoredFile:
-    async with async_session_maker() as session:
-        file_item = await session.get(StoredFile, file_id)
-        if not file_item:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
-            )
-        file_item.title = title
-        await session.commit()
-        await session.refresh(file_item)
-        return file_item
-
-
 async def delete_file(file_id: str) -> None:
     async with async_session_maker() as session:
         file_item = await session.get(StoredFile, file_id)

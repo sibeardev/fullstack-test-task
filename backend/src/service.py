@@ -7,16 +7,7 @@ from fastapi import HTTPException, UploadFile, status
 from src.core.config import DEFAULT_MIME_TYPE, STORAGE_DIR
 from src.infrastructure.db.models import Alert, StoredFile
 from src.infrastructure.db.session import async_session_maker
-
-
-async def get_file(file_id: str) -> StoredFile:
-    async with async_session_maker() as session:
-        file_item = await session.get(StoredFile, file_id)
-        if not file_item:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
-            )
-        return file_item
+from src.infrastructure.repositories import StoredFileRepository
 
 
 async def create_file(title: str, upload_file: UploadFile) -> StoredFile:
@@ -78,7 +69,7 @@ async def delete_file(file_id: str) -> None:
 
 
 async def get_file_path(file_id: str) -> tuple[StoredFile, Path]:
-    file_item = await get_file(file_id)
+    file_item = await StoredFileRepository().get_file(file_id)
     stored_path = STORAGE_DIR / file_item.stored_name
     if not stored_path.exists():
         raise HTTPException(

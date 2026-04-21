@@ -5,12 +5,7 @@ from starlette import status
 from src.api.schemas.files import FileItem, FileUpdate
 from src.core.config import STORAGE_DIR
 from src.infrastructure.repositories import StoredFileRepository
-from src.service import (
-    create_file,
-    delete_file,
-    get_file,
-    update_file,
-)
+from src.service import create_file, delete_file, update_file
 from src.workers.tasks import scan_file_for_threats
 
 files_router = APIRouter(prefix="/files", tags=["files"])
@@ -33,7 +28,7 @@ async def create_file_view(
 
 @files_router.get("/{file_id}", response_model=FileItem)
 async def get_file_view(file_id: str):
-    return await get_file(file_id)
+    return await StoredFileRepository().get_file(file_id)
 
 
 @files_router.patch("/{file_id}", response_model=FileItem)
@@ -46,7 +41,7 @@ async def update_file_view(
 
 @files_router.get("/{file_id}/download")
 async def download_file(file_id: str):
-    file_item = await get_file(file_id)
+    file_item = await StoredFileRepository().get_file(file_id)
     stored_path = STORAGE_DIR / file_item.stored_name
     if not stored_path.exists():
         raise HTTPException(

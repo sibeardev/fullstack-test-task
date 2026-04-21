@@ -6,8 +6,8 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
 
 from src.core.config import DEFAULT_MIME_TYPE, STORAGE_DIR
-from src.core.database import async_session_maker
-from src.models import Alert, StoredFile
+from src.infrastructure.db.models import Alert, StoredFile
+from src.infrastructure.db.session import async_session_maker
 
 
 async def list_files() -> list[StoredFile]:

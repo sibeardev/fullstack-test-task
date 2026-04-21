@@ -1,11 +1,9 @@
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile
 from fastapi.responses import FileResponse
-from starlette import status
 
 from src.api.schemas.files import FileItem, FileUpdate
-from src.core.config import STORAGE_DIR
 from src.infrastructure.repositories import StoredFileRepository
-from src.service import create_file
+from src.service import create_file, get_file_path
 from src.workers.tasks import scan_file_for_threats
 
 files_router = APIRouter(prefix="/files", tags=["files"])
@@ -41,16 +39,11 @@ async def update_file_view(
 
 @files_router.get("/{file_id}/download")
 async def download_file(file_id: str):
-    file_item = await StoredFileRepository().get_file(file_id)
-    stored_path = STORAGE_DIR / file_item.stored_name
-    if not stored_path.exists():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Stored file not found"
-        )
+    stored_file, stored_path = await get_file_path(file_id)
     return FileResponse(
         path=stored_path,
-        media_type=file_item.mime_type,
-        filename=file_item.original_name,
+        media_type=stored_file.mime_type,
+        filename=stored_file.original_name,
     )
 
 

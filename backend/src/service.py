@@ -4,13 +4,10 @@ from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from src.core.config import DATABASE_URL, DEFAULT_MIME_TYPE, STORAGE_DIR
+from src.core.config import DEFAULT_MIME_TYPE, STORAGE_DIR
+from src.core.database import async_session_maker
 from src.models import Alert, StoredFile
-
-engine = create_async_engine(DATABASE_URL)
-async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def list_files() -> list[StoredFile]:

@@ -2,16 +2,15 @@ import asyncio
 from pathlib import Path
 
 from celery import Celery
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from src.core.config import (
-    DATABASE_URL,
     MAX_UPLOAD_SIZE_MB,
     PROHIBITED_EXTENSIONS,
     REDIS_URL,
     STORAGE_DIR,
     VALID_PDF_MIME_TYPES,
 )
+from src.core.database import async_session_maker
 from src.models import Alert, StoredFile
 
 _worker_loop: asyncio.AbstractEventLoop | None = None
@@ -26,8 +25,6 @@ def run_in_worker_loop(coroutine):
 
 
 celery_app = Celery("file_tasks", broker=REDIS_URL, backend=REDIS_URL)
-engine = create_async_engine(DATABASE_URL)
-async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def _scan_file_for_threats(file_id: str) -> None:

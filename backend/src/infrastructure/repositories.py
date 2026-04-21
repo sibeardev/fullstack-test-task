@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import HTTPException, status
 from sqlalchemy import select
 
@@ -40,14 +42,15 @@ class StoredFileRepository:
                 )
             return file_item
 
-    async def update_file(self, file_id: str, title: str) -> StoredFile:
+    async def update_file(self, file_id: str, **kwargs: dict[str, Any]) -> StoredFile:
         async with async_session_maker() as session:
             file_item = await session.get(StoredFile, file_id)
             if not file_item:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
                 )
-            file_item.title = title
+            for key, value in kwargs.items():
+                setattr(file_item, key, value)
             await session.commit()
             await session.refresh(file_item)
             return file_item

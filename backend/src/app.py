@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette import status
 
+from src.api.schemas.alerts import AlertItem
+from src.api.schemas.files import FileItem, FileUpdate
 from src.core.config import STORAGE_DIR, settings
-from src.schemas import AlertItem, FileItem, FileUpdate
 from src.service import (
     create_file,
     delete_file,

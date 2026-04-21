@@ -18,12 +18,6 @@ async def list_files() -> list[StoredFile]:
         return list(result.scalars().all())
 
 
-async def list_alerts() -> list[Alert]:
-    async with async_session_maker() as session:
-        result = await session.execute(select(Alert).order_by(Alert.created_at.desc()))
-        return list(result.scalars().all())
-
-
 async def get_file(file_id: str) -> StoredFile:
     async with async_session_maker() as session:
         file_item = await session.get(StoredFile, file_id)

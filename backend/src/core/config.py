@@ -4,8 +4,8 @@ from .env import Settings
 
 settings = Settings()
 
-
-BASE_DIR = Path(__file__).resolve().parent.parent
+DEBUG = settings.DEBUG
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 STORAGE_DIR = BASE_DIR / "storage" / "files"
 MAX_UPLOAD_SIZE_MB = 10
 PROHIBITED_EXTENSIONS = {".exe", ".bat", ".cmd", ".sh", ".js"}

@@ -33,6 +33,13 @@ class StoredFileRepository:
             )
             return list(result.scalars().all())
 
+    async def create_file(self, file: StoredFile) -> StoredFile:
+        async with async_session_maker() as session:
+            session.add(file)
+            await session.commit()
+            await session.refresh(file)
+            return file
+
     async def get_file(self, file_id: str) -> StoredFile:
         async with async_session_maker() as session:
             file_item = await session.get(StoredFile, file_id)

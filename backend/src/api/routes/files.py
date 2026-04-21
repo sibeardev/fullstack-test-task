@@ -2,8 +2,9 @@ from fastapi import APIRouter, File, Form, UploadFile
 from fastapi.responses import FileResponse
 
 from src.api.schemas.files import FileItem, FileUpdate
+from src.application.use_cases.upload_file import create_file
 from src.infrastructure.repositories import StoredFileRepository
-from src.service import create_file, get_file_path
+from src.infrastructure.storage.local_storage import get_file_path
 from src.workers.tasks import scan_file_for_threats
 
 files_router = APIRouter(prefix="/files", tags=["files"])

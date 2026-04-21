@@ -6,12 +6,14 @@ from src.core.config import (
     STORAGE_DIR,
     VALID_PDF_MIME_TYPES,
 )
+from src.core.exceptions import EntityNotFoundError
 from src.infrastructure.repositories import AlertRepository, StoredFileRepository
 
 
 async def scan_file_for_threats(file_id: str) -> None:
-    file_item = await StoredFileRepository().get_file(file_id)
-    if not file_item:
+    try:
+        file_item = await StoredFileRepository().get_file(file_id)
+    except EntityNotFoundError:
         return
 
     reasons: list[str] = []
@@ -36,8 +38,9 @@ async def scan_file_for_threats(file_id: str) -> None:
 
 
 async def extract_file_metadata(file_id: str) -> None:
-    file_item = await StoredFileRepository().get_file(file_id)
-    if not file_item:
+    try:
+        file_item = await StoredFileRepository().get_file(file_id)
+    except EntityNotFoundError:
         return
 
     stored_path = STORAGE_DIR / file_item.stored_name
@@ -72,8 +75,9 @@ async def extract_file_metadata(file_id: str) -> None:
 
 
 async def send_file_alert(file_id: str) -> None:
-    file_item = await StoredFileRepository().get_file(file_id)
-    if not file_item:
+    try:
+        file_item = await StoredFileRepository().get_file(file_id)
+    except EntityNotFoundError:
         return
     alert_repository = AlertRepository()
     if file_item.processing_status == "failed":

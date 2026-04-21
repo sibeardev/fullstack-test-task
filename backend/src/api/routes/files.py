@@ -1,8 +1,10 @@
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from starlette import status
 
 from src.api.schemas.files import FileItem, FileUpdate
 from src.application.use_cases.upload_file import create_file
+from src.core.exceptions import EntityNotFoundError
 from src.infrastructure.repositories import StoredFileRepository
 from src.infrastructure.storage.local_storage import get_file_path
 from src.workers.tasks import scan_file_for_threats_task
@@ -27,7 +29,13 @@ async def create_file_view(
 
 @files_router.get("/{file_id}", response_model=FileItem)
 async def get_file_view(file_id: str):
-    return await StoredFileRepository().get_file(file_id)
+    try:
+        return await StoredFileRepository().get_file(file_id)
+    except EntityNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found",
+        ) from exc
 
 
 @files_router.patch("/{file_id}", response_model=FileItem)
@@ -35,7 +43,13 @@ async def update_file_view(
     file_id: str,
     payload: FileUpdate,
 ):
-    return await StoredFileRepository().update_file(file_id=file_id, title=payload.title)
+    try:
+        return await StoredFileRepository().update_file(file_id=file_id, title=payload.title)
+    except EntityNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found",
+        ) from exc
 
 
 @files_router.get("/{file_id}/download")
@@ -50,4 +64,10 @@ async def download_file(file_id: str):
 
 @files_router.delete("/{file_id}", status_code=204)
 async def delete_file_view(file_id: str):
-    await StoredFileRepository().delete_file(file_id)
+    try:
+        await StoredFileRepository().delete_file(file_id)
+    except EntityNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found",
+        ) from exc

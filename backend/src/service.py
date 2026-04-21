@@ -3,19 +3,10 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import HTTPException, UploadFile, status
-from sqlalchemy import select
 
 from src.core.config import DEFAULT_MIME_TYPE, STORAGE_DIR
 from src.infrastructure.db.models import Alert, StoredFile
 from src.infrastructure.db.session import async_session_maker
-
-
-async def list_files() -> list[StoredFile]:
-    async with async_session_maker() as session:
-        result = await session.execute(
-            select(StoredFile).order_by(StoredFile.created_at.desc())
-        )
-        return list(result.scalars().all())
 
 
 async def get_file(file_id: str) -> StoredFile:

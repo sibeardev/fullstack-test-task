@@ -4,11 +4,11 @@ from starlette import status
 
 from src.api.schemas.files import FileItem, FileUpdate
 from src.core.config import STORAGE_DIR
+from src.infrastructure.repositories import StoredFileRepository
 from src.service import (
     create_file,
     delete_file,
     get_file,
-    list_files,
     update_file,
 )
 from src.workers.tasks import scan_file_for_threats
@@ -18,7 +18,7 @@ files_router = APIRouter(prefix="/files", tags=["files"])
 
 @files_router.get("", response_model=list[FileItem])
 async def list_files_view():
-    return await list_files()
+    return await StoredFileRepository().list_files()
 
 
 @files_router.post("", response_model=FileItem, status_code=201)

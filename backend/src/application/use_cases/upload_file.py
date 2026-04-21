@@ -5,6 +5,7 @@ from uuid import uuid4
 from fastapi import HTTPException, UploadFile, status
 
 from src.core.config import DEFAULT_MIME_TYPE, STORAGE_DIR
+from src.domain.enums import ProcessingStatus
 from src.infrastructure.db.models import StoredFile
 from src.infrastructure.repositories import StoredFileRepository
 
@@ -32,7 +33,7 @@ async def create_file(title: str, upload_file: UploadFile) -> StoredFile:
             or mimetypes.guess_type(stored_name)[0]
             or DEFAULT_MIME_TYPE,
             size=len(content),
-            processing_status="uploaded",
+            processing_status=ProcessingStatus.UPLOADED,
         )
     )
     return file_item

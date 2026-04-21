@@ -7,6 +7,7 @@ from src.core.config import (
     VALID_PDF_MIME_TYPES,
 )
 from src.core.exceptions import EntityNotFoundError
+from src.domain.enums import ProcessingStatus
 from src.infrastructure.repositories import AlertRepository, StoredFileRepository
 
 
@@ -30,7 +31,7 @@ async def scan_file_for_threats(file_id: str) -> None:
 
     await StoredFileRepository().update_file(
         file_id=file_id,
-        processing_status="processing",
+        processing_status=ProcessingStatus.PROCESSING,
         scan_status="suspicious" if reasons else "clean",
         scan_details=", ".join(reasons) if reasons else "no threats found",
         requires_attention=bool(reasons),
@@ -47,7 +48,7 @@ async def extract_file_metadata(file_id: str) -> None:
     if not stored_path.exists():
         await StoredFileRepository().update_file(
             file_id=file_id,
-            processing_status="failed",
+            processing_status=ProcessingStatus.FAILED,
             scan_status=file_item.scan_status or "failed",
             scan_details="stored file not found during metadata extraction",
         )
@@ -69,7 +70,7 @@ async def extract_file_metadata(file_id: str) -> None:
 
     await StoredFileRepository().update_file(
         file_id=file_id,
-        processing_status="processed",
+        processing_status=ProcessingStatus.PROCESSED,
         metadata_json=metadata,
     )
 
@@ -80,7 +81,7 @@ async def send_file_alert(file_id: str) -> None:
     except EntityNotFoundError:
         return
     alert_repository = AlertRepository()
-    if file_item.processing_status == "failed":
+    if file_item.processing_status == ProcessingStatus.FAILED:
         await alert_repository.create_alert(
             file_id=file_id, level="critical", message="File processing failed"
         )

@@ -3,6 +3,8 @@ from datetime import datetime
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from src.domain.enums import ProcessingStatus
+
 
 class Base(DeclarativeBase):
     pass
@@ -18,7 +20,7 @@ class StoredFile(Base):
     mime_type: Mapped[str] = mapped_column(String(255), nullable=False)
     size: Mapped[int] = mapped_column(Integer, nullable=False)
     processing_status: Mapped[str] = mapped_column(
-        String(50), nullable=False, default="uploaded"
+        String(50), nullable=False, default=ProcessingStatus.UPLOADED
     )
     scan_status: Mapped[str | None] = mapped_column(String(50), nullable=True)
     scan_details: Mapped[str | None] = mapped_column(String(500), nullable=True)

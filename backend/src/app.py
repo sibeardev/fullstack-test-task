@@ -3,14 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette import status
 
-from src.api.schemas.alerts import AlertItem
+from src.api.routes.alerts import alerts_router
 from src.api.schemas.files import FileItem, FileUpdate
 from src.core.config import STORAGE_DIR, settings
 from src.service import (
     create_file,
     delete_file,
     get_file,
-    list_alerts,
     list_files,
     update_file,
 )
@@ -27,15 +26,12 @@ app.add_middleware(
     allow_headers=settings.CORS.ALLOW_HEADERS,
 )
 
+app.include_router(alerts_router)
+
 
 @app.get("/files", response_model=list[FileItem])
 async def list_files_view():
     return await list_files()
-
-
-@app.get("/alerts", response_model=list[AlertItem])
-async def list_alerts_view():
-    return await list_alerts()
 
 
 @app.post("/files", response_model=FileItem, status_code=201)

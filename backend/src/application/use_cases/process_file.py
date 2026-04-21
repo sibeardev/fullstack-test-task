@@ -7,7 +7,7 @@ from src.core.config import (
     VALID_PDF_MIME_TYPES,
 )
 from src.core.exceptions import EntityNotFoundError
-from src.domain.enums import ProcessingStatus
+from src.domain.enums import ProcessingStatus, ScanStatus
 from src.infrastructure.repositories import AlertRepository, StoredFileRepository
 
 
@@ -32,7 +32,7 @@ async def scan_file_for_threats(file_id: str) -> None:
     await StoredFileRepository().update_file(
         file_id=file_id,
         processing_status=ProcessingStatus.PROCESSING,
-        scan_status="suspicious" if reasons else "clean",
+        scan_status=ScanStatus.SUSPICIOUS if reasons else ScanStatus.CLEAN,
         scan_details=", ".join(reasons) if reasons else "no threats found",
         requires_attention=bool(reasons),
     )
@@ -49,7 +49,7 @@ async def extract_file_metadata(file_id: str) -> None:
         await StoredFileRepository().update_file(
             file_id=file_id,
             processing_status=ProcessingStatus.FAILED,
-            scan_status=file_item.scan_status or "failed",
+            scan_status=file_item.scan_status or ScanStatus.FAILED,
             scan_details="stored file not found during metadata extraction",
         )
         return

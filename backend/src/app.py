@@ -14,7 +14,7 @@ from src.service import (
     list_files,
     update_file,
 )
-from src.tasks import scan_file_for_threats
+from src.workers.tasks import scan_file_for_threats
 
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 

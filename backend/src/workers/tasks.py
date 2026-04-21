@@ -10,8 +10,8 @@ from src.core.config import (
     STORAGE_DIR,
     VALID_PDF_MIME_TYPES,
 )
-from src.core.database import async_session_maker
-from src.models import Alert, StoredFile
+from src.infrastructure.db.models import Alert, StoredFile
+from src.infrastructure.db.session import async_session_maker
 
 _worker_loop: asyncio.AbstractEventLoop | None = None
 

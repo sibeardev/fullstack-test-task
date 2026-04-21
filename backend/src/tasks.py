@@ -1,12 +1,19 @@
 import asyncio
-import os
 from pathlib import Path
-from celery import Celery
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from src.models import Alert, StoredFile
-from src.service import STORAGE_DIR, DB_URL
 
-REDIS_URL = os.environ.get("REDIS_URL", "redis://backend-redis:6379/0")
+from celery import Celery
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from src.core.config import (
+    DATABASE_URL,
+    MAX_UPLOAD_SIZE_MB,
+    PROHIBITED_EXTENSIONS,
+    REDIS_URL,
+    STORAGE_DIR,
+    VALID_PDF_MIME_TYPES,
+)
+from src.models import Alert, StoredFile
+
 _worker_loop: asyncio.AbstractEventLoop | None = None
 
 
@@ -19,7 +26,7 @@ def run_in_worker_loop(coroutine):
 
 
 celery_app = Celery("file_tasks", broker=REDIS_URL, backend=REDIS_URL)
-engine = create_async_engine(DB_URL)
+engine = create_async_engine(DATABASE_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 
@@ -33,13 +40,13 @@ async def _scan_file_for_threats(file_id: str) -> None:
         reasons: list[str] = []
         extension = Path(file_item.original_name).suffix.lower()
 
-        if extension in {".exe", ".bat", ".cmd", ".sh", ".js"}:
+        if extension in PROHIBITED_EXTENSIONS:
             reasons.append(f"suspicious extension {extension}")
 
-        if file_item.size > 10 * 1024 * 1024:
-            reasons.append("file is larger than 10 MB")
+        if file_item.size > MAX_UPLOAD_SIZE_MB * 1024 * 1024:
+            reasons.append(f"file is larger than {MAX_UPLOAD_SIZE_MB} MB")
 
-        if extension == ".pdf" and file_item.mime_type not in {"application/pdf", "application/octet-stream"}:
+        if extension == ".pdf" and file_item.mime_type not in VALID_PDF_MIME_TYPES:
             reasons.append("pdf extension does not match mime type")
 
         file_item.scan_status = "suspicious" if reasons else "clean"
@@ -93,7 +100,9 @@ async def _send_file_alert(file_id: str) -> None:
             return
 
         if file_item.processing_status == "failed":
-            alert = Alert(file_id=file_id, level="critical", message="File processing failed")
+            alert = Alert(
+                file_id=file_id, level="critical", message="File processing failed"
+            )
         elif file_item.requires_attention:
             alert = Alert(
                 file_id=file_id,
@@ -101,7 +110,9 @@ async def _send_file_alert(file_id: str) -> None:
                 message=f"File requires attention: {file_item.scan_details}",
             )
         else:
-            alert = Alert(file_id=file_id, level="info", message="File processed successfully")
+            alert = Alert(
+                file_id=file_id, level="info", message="File processed successfully"
+            )
 
         session.add(alert)
         await session.commit()

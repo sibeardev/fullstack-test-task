@@ -26,7 +26,11 @@ services:
     container_name: backend-db
     ports:
       - "5432:5432"
-    env_file: ".env"
+    environment:
+      - POSTGRES_USER=${POSTGRES__USER}
+      - POSTGRES_PASSWORD=${POSTGRES__PASSWORD}
+      - POSTGRES_DB=${POSTGRES__DB}
+      - POSTGRES_PORT=${POSTGRES__PORT}
     volumes:
       - backend-db-volume:/var/lib/postgresql/data
 

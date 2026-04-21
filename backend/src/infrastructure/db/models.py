@@ -44,7 +44,7 @@ class Alert(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     file_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("files.id"), nullable=False
+        String(36), ForeignKey("files.id", ondelete="CASCADE"), nullable=False
     )
     level: Mapped[str] = mapped_column(String(50), nullable=False)
     message: Mapped[str] = mapped_column(String(500), nullable=False)

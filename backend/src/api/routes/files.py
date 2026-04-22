@@ -5,6 +5,7 @@ from starlette import status
 from src.api.schemas.files import FileItem, FileUpdate
 from src.application.use_cases.upload_file import create_file
 from src.core.exceptions import EntityNotFoundError
+from src.infrastructure.db.session import async_session_maker
 from src.infrastructure.repositories import StoredFileRepository
 from src.infrastructure.storage.local_storage import get_file_path
 from src.workers.tasks import scan_file_for_threats_task
@@ -14,7 +15,8 @@ files_router = APIRouter(prefix="/files", tags=["files"])
 
 @files_router.get("", response_model=list[FileItem])
 async def list_files_view():
-    return await StoredFileRepository().list_files()
+    async with async_session_maker() as session:
+        return await StoredFileRepository(session).list_files()
 
 
 @files_router.post("", response_model=FileItem, status_code=201)
@@ -30,7 +32,8 @@ async def create_file_view(
 @files_router.get("/{file_id}", response_model=FileItem)
 async def get_file_view(file_id: str):
     try:
-        return await StoredFileRepository().get_file(file_id)
+        async with async_session_maker() as session:
+            return await StoredFileRepository(session).get_file(file_id)
     except EntityNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -44,7 +47,10 @@ async def update_file_view(
     payload: FileUpdate,
 ):
     try:
-        return await StoredFileRepository().update_file(file_id=file_id, title=payload.title)
+        async with async_session_maker() as session:
+            return await StoredFileRepository(session).update_file(
+                file_id=file_id, title=payload.title
+            )
     except EntityNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -65,7 +71,8 @@ async def download_file(file_id: str):
 @files_router.delete("/{file_id}", status_code=204)
 async def delete_file_view(file_id: str):
     try:
-        await StoredFileRepository().delete_file(file_id)
+        async with async_session_maker() as session:
+            await StoredFileRepository(session).delete_file(file_id)
     except EntityNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

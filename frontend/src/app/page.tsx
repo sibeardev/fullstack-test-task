@@ -14,9 +14,10 @@ import {
   Spinner,
   Table,
 } from "react-bootstrap";
-import { API_BASE_URL } from "../shared/api/config";
+import { fetchAlerts } from "../features/alerts/data/alertsApi";
 import { FileItem } from "../features/files/domain/types";
 import { AlertItem } from "../features/alerts/domain/types";
+import { fetchFiles, getFileDownloadUrl, uploadFile } from "../features/files/data/filesApi";
 
 
 function formatDate(value: string) {
@@ -81,18 +82,9 @@ export default function Page() {
     setErrorMessage(null);
 
     try {
-      const [filesResponse, alertsResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/files`, { cache: "no-store" }),
-        fetch(`${API_BASE_URL}/alerts`, { cache: "no-store" }),
-      ]);
-
-      if (!filesResponse.ok || !alertsResponse.ok) {
-        throw new Error("Не удалось загрузить данные");
-      }
-
       const [filesData, alertsData] = await Promise.all([
-        filesResponse.json() as Promise<FileItem[]>,
-        alertsResponse.json() as Promise<AlertItem[]>,
+        fetchFiles(),
+        fetchAlerts(),
       ]);
 
       setFiles(filesData);
@@ -119,19 +111,8 @@ export default function Page() {
     setIsSubmitting(true);
     setErrorMessage(null);
 
-    const formData = new FormData();
-    formData.append("title", title.trim());
-    formData.append("file", selectedFile);
-
     try {
-      const response = await fetch(`${API_BASE_URL}/files`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Не удалось загрузить файл");
-      }
+      await uploadFile(title.trim(), selectedFile);
 
       setShowModal(false);
       setTitle("");
@@ -238,7 +219,7 @@ export default function Page() {
                             <td className="text-nowrap">
                               <Button
                                 as="a"
-                                href={`${API_BASE_URL}/files/${file.id}/download`}
+                                href={getFileDownloadUrl(file.id)}
                                 variant="outline-primary"
                                 size="sm"
                               >

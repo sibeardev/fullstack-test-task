@@ -9,7 +9,7 @@
 ## Скачать проект
 
 ```bash
-git clone https://github.com/sibeardev/karl.git
+git clone https://github.com/sibeardev/fullstack-test-task.git
 cd karl
 ```
 

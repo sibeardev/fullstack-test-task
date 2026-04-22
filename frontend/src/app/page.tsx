@@ -15,57 +15,13 @@ import {
   Table,
 } from "react-bootstrap";
 import { fetchAlerts } from "../features/alerts/data/alertsApi";
+import { getLevelVariant } from "../features/alerts/domain/presentation";
 import { FileItem } from "../features/files/domain/types";
 import { AlertItem } from "../features/alerts/domain/types";
 import { fetchFiles, getFileDownloadUrl, uploadFile } from "../features/files/data/filesApi";
-
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ru-RU", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-function formatSize(size: number) {
-  if (size < 1024) {
-    return `${size} B`;
-  }
-
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function getLevelVariant(level: string) {
-  if (level === "critical") {
-    return "danger";
-  }
-
-  if (level === "warning") {
-    return "warning";
-  }
-
-  return "success";
-}
-
-function getProcessingVariant(status: string) {
-  if (status === "failed") {
-    return "danger";
-  }
-
-  if (status === "processing") {
-    return "warning";
-  }
-
-  if (status === "processed") {
-    return "success";
-  }
-
-  return "secondary";
-}
+import { formatSize, getProcessingVariant } from "../features/files/domain/presentation";
+import { validateUploadInput } from "../features/files/domain/validation";
+import { formatDate } from "../shared/lib/formatters";
 
 export default function Page() {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -103,8 +59,9 @@ export default function Page() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!title.trim() || !selectedFile) {
-      setErrorMessage("Укажите название и выберите файл");
+    const validationError = validateUploadInput(title, selectedFile);
+    if (validationError) {
+      setErrorMessage(validationError);
       return;
     }
 

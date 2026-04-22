@@ -8,20 +8,16 @@ import {
   Card,
   Col,
   Container,
-  Form,
-  Modal,
   Row,
-  Spinner,
-  Table,
 } from "react-bootstrap";
 import { fetchAlerts } from "../features/alerts/data/alertsApi";
-import { getLevelVariant } from "../features/alerts/domain/presentation";
+import { AlertsTable } from "../features/alerts/ui/AlertsTable";
 import { FileItem } from "../features/files/domain/types";
 import { AlertItem } from "../features/alerts/domain/types";
-import { fetchFiles, getFileDownloadUrl, uploadFile } from "../features/files/data/filesApi";
-import { formatSize, getProcessingVariant } from "../features/files/domain/presentation";
+import { fetchFiles, uploadFile } from "../features/files/data/filesApi";
 import { validateUploadInput } from "../features/files/domain/validation";
-import { formatDate } from "../shared/lib/formatters";
+import { FilesTable } from "../features/files/ui/FilesTable";
+import { UploadFileModal } from "../features/files/ui/UploadFileModal";
 
 export default function Page() {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -121,75 +117,7 @@ export default function Page() {
               </div>
             </Card.Header>
             <Card.Body className="px-4 pb-4">
-              {isLoading ? (
-                <div className="d-flex justify-content-center py-5">
-                  <Spinner animation="border" />
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover bordered className="align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Название</th>
-                        <th>Файл</th>
-                        <th>MIME</th>
-                        <th>Размер</th>
-                        <th>Статус</th>
-                        <th>Проверка</th>
-                        <th>Создан</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {files.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} className="text-center py-4 text-secondary">
-                            Файлы пока не загружены
-                          </td>
-                        </tr>
-                      ) : (
-                        files.map((file) => (
-                          <tr key={file.id}>
-                            <td>
-                              <div className="fw-semibold">{file.title}</div>
-                              <div className="small text-secondary">{file.id}</div>
-                            </td>
-                            <td>{file.original_name}</td>
-                            <td>{file.mime_type}</td>
-                            <td>{formatSize(file.size)}</td>
-                            <td>
-                              <Badge bg={getProcessingVariant(file.processing_status)}>
-                                {file.processing_status}
-                              </Badge>
-                            </td>
-                            <td>
-                              <div className="d-flex flex-column gap-1">
-                                <Badge bg={file.requires_attention ? "warning" : "success"}>
-                                  {file.scan_status ?? "pending"}
-                                </Badge>
-                                <span className="small text-secondary">
-                                  {file.scan_details ?? "Ожидает обработки"}
-                                </span>
-                              </div>
-                            </td>
-                            <td>{formatDate(file.created_at)}</td>
-                            <td className="text-nowrap">
-                              <Button
-                                as="a"
-                                href={getFileDownloadUrl(file.id)}
-                                variant="outline-primary"
-                                size="sm"
-                              >
-                                Скачать
-                              </Button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </Table>
-                </div>
-              )}
+              <FilesTable files={files} isLoading={isLoading} />
             </Card.Body>
           </Card>
 
@@ -201,85 +129,21 @@ export default function Page() {
               </div>
             </Card.Header>
             <Card.Body className="px-4 pb-4">
-              {isLoading ? (
-                <div className="d-flex justify-content-center py-5">
-                  <Spinner animation="border" />
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover bordered className="align-middle mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>ID</th>
-                        <th>File ID</th>
-                        <th>Уровень</th>
-                        <th>Сообщение</th>
-                        <th>Создан</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {alerts.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="text-center py-4 text-secondary">
-                            Алертов пока нет
-                          </td>
-                        </tr>
-                      ) : (
-                        alerts.map((item) => (
-                          <tr key={item.id}>
-                            <td>{item.id}</td>
-                            <td className="small">{item.file_id}</td>
-                            <td>
-                              <Badge bg={getLevelVariant(item.level)}>{item.level}</Badge>
-                            </td>
-                            <td>{item.message}</td>
-                            <td>{formatDate(item.created_at)}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </Table>
-                </div>
-              )}
+              <AlertsTable alerts={alerts} isLoading={isLoading} />
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Form onSubmit={handleSubmit}>
-          <Modal.Header closeButton>
-            <Modal.Title>Добавить файл</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>Название</Form.Label>
-              <Form.Control
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Например, Договор с подрядчиком"
-              />
-            </Form.Group>
-            <Form.Group>
-              <Form.Label>Файл</Form.Label>
-              <Form.Control
-                type="file"
-                onChange={(event) =>
-                  setSelectedFile((event.target as HTMLInputElement).files?.[0] ?? null)
-                }
-              />
-            </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="outline-secondary" onClick={() => setShowModal(false)}>
-              Отмена
-            </Button>
-            <Button type="submit" variant="primary" disabled={isSubmitting}>
-              {isSubmitting ? "Загрузка..." : "Сохранить"}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
+      <UploadFileModal
+        show={showModal}
+        isSubmitting={isSubmitting}
+        title={title}
+        onTitleChange={setTitle}
+        onFileChange={setSelectedFile}
+        onClose={() => setShowModal(false)}
+        onSubmit={handleSubmit}
+      />
     </Container>
   );
 }

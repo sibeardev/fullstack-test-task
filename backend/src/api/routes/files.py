@@ -10,6 +10,9 @@ from src.infrastructure.repositories import StoredFileRepository
 from src.infrastructure.storage.local_storage import get_file_path
 from src.workers.tasks import scan_file_for_threats_task
 
+TITLE_FORM_PARAM = Form(...)
+UPLOAD_FILE_PARAM = File(...)
+
 files_router = APIRouter(prefix="/files", tags=["files"])
 
 
@@ -21,8 +24,8 @@ async def list_files_view():
 
 @files_router.post("", response_model=FileItem, status_code=201)
 async def create_file_view(
-    title: str = Form(...),
-    file: UploadFile = File(...),
+    title: str = TITLE_FORM_PARAM,
+    file: UploadFile = UPLOAD_FILE_PARAM,
 ):
     file_item = await create_file(title=title, upload_file=file)
     scan_file_for_threats_task.delay(file_item.id)

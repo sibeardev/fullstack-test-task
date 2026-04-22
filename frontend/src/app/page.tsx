@@ -9,10 +9,9 @@ import {
   Container,
   Row,
 } from "react-bootstrap";
-import { AlertsTable } from "../features/alerts/ui/AlertsTable";
-import { useDashboardPage } from "../features/dashboard/ui/useDashboardPage";
-import { FilesTable } from "../features/files/ui/FilesTable";
-import { UploadFileModal } from "../features/files/ui/UploadFileModal";
+import { AlertsTable } from "../features/alerts";
+import { useDashboardPage } from "../features/dashboard";
+import { FilesTable, UploadFileModal } from "../features/files";
 
 export default function Page() {
   const {

@@ -30,6 +30,7 @@ REDIS__DSN=redis://backend-redis:6379/0
 
 # Node.js
 NEXT_TELEMETRY_DISABLED=0
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 PORT=3000
 HOSTNAME="0.0.0.0"
 ```
@@ -42,7 +43,7 @@ HOSTNAME="0.0.0.0"
 docker compose up --build
 ```
 
-2. Применить миграции:
+1. Применить миграции:
 
 ```bash
 docker exec -it backend alembic upgrade head

@@ -1,6 +1,5 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
 import {
   Alert,
   Badge,
@@ -10,73 +9,26 @@ import {
   Container,
   Row,
 } from "react-bootstrap";
-import { fetchAlerts } from "../features/alerts/data/alertsApi";
 import { AlertsTable } from "../features/alerts/ui/AlertsTable";
-import { FileItem } from "../features/files/domain/types";
-import { AlertItem } from "../features/alerts/domain/types";
-import { fetchFiles, uploadFile } from "../features/files/data/filesApi";
-import { validateUploadInput } from "../features/files/domain/validation";
+import { useDashboardPage } from "../features/dashboard/ui/useDashboardPage";
 import { FilesTable } from "../features/files/ui/FilesTable";
 import { UploadFileModal } from "../features/files/ui/UploadFileModal";
 
 export default function Page() {
-  const [files, setFiles] = useState<FileItem[]>([]);
-  const [alerts, setAlerts] = useState<AlertItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [title, setTitle] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  async function loadData() {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const [filesData, alertsData] = await Promise.all([
-        fetchFiles(),
-        fetchAlerts(),
-      ]);
-
-      setFiles(filesData);
-      setAlerts(alertsData);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Произошла ошибка");
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadData();
-  }, []);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const validationError = validateUploadInput(title, selectedFile);
-    if (validationError) {
-      setErrorMessage(validationError);
-      return;
-    }
-
-    setIsSubmitting(true);
-    setErrorMessage(null);
-
-    try {
-      await uploadFile(title.trim(), selectedFile);
-
-      setShowModal(false);
-      setTitle("");
-      setSelectedFile(null);
-      await loadData();
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Произошла ошибка");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+  const {
+    files,
+    alerts,
+    isLoading,
+    isSubmitting,
+    showModal,
+    title,
+    errorMessage,
+    setShowModal,
+    setTitle,
+    setSelectedFile,
+    loadData,
+    handleSubmit,
+  } = useDashboardPage();
 
   return (
     <Container fluid className="py-4 px-4 bg-light min-vh-100">

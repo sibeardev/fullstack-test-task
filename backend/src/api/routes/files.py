@@ -5,8 +5,7 @@ from starlette import status
 from src.api.schemas.files import FileItem, FileUpdate
 from src.application.use_cases.upload_file import create_file
 from src.core.exceptions import EntityNotFoundError
-from src.infrastructure.db.session import async_session_maker
-from src.infrastructure.repositories import StoredFileRepository
+from src.infrastructure.db.uow import UnitOfWork
 from src.infrastructure.storage.local_storage import get_file_path
 from src.workers.tasks import scan_file_for_threats_task
 
@@ -18,8 +17,8 @@ files_router = APIRouter(prefix="/files", tags=["files"])
 
 @files_router.get("", response_model=list[FileItem])
 async def list_files_view():
-    async with async_session_maker() as session:
-        return await StoredFileRepository(session).list_files()
+    async with UnitOfWork() as uow:
+        return await uow.files_repo.list_files()
 
 
 @files_router.post("", response_model=FileItem, status_code=201)
@@ -35,8 +34,8 @@ async def create_file_view(
 @files_router.get("/{file_id}", response_model=FileItem)
 async def get_file_view(file_id: str):
     try:
-        async with async_session_maker() as session:
-            return await StoredFileRepository(session).get_file(file_id)
+        async with UnitOfWork() as uow:
+            return await uow.files_repo.get_file(file_id)
     except EntityNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -50,11 +49,11 @@ async def update_file_view(
     payload: FileUpdate,
 ):
     try:
-        async with async_session_maker() as session:
-            file_item = await StoredFileRepository(session).update_file(
+        async with UnitOfWork() as uow:
+            file_item = await uow.files_repo.update_file(
                 file_id=file_id, title=payload.title
             )
-            await session.commit()
+            await uow.commit()
             return file_item
     except EntityNotFoundError as exc:
         raise HTTPException(
@@ -83,9 +82,9 @@ async def download_file(file_id: str):
 @files_router.delete("/{file_id}", status_code=204)
 async def delete_file_view(file_id: str):
     try:
-        async with async_session_maker() as session:
-            await StoredFileRepository(session).delete_file(file_id)
-            await session.commit()
+        async with UnitOfWork() as uow:
+            await uow.files_repo.delete_file(file_id)
+            await uow.commit()
     except EntityNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

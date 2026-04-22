@@ -8,13 +8,12 @@ from src.core.config import (
 )
 from src.core.exceptions import EntityNotFoundError
 from src.domain.enums import ProcessingStatus, ScanStatus
-from src.infrastructure.db.session import async_session_maker
-from src.infrastructure.repositories import AlertRepository, StoredFileRepository
+from src.infrastructure.db.uow import UnitOfWork
 
 
 async def scan_file_for_threats(file_id: str) -> None:
-    async with async_session_maker() as session:
-        repository = StoredFileRepository(session)
+    async with UnitOfWork() as uow:
+        repository = uow.files_repo
         try:
             file_item = await repository.get_file(file_id)
         except EntityNotFoundError:
@@ -39,12 +38,12 @@ async def scan_file_for_threats(file_id: str) -> None:
             scan_details=", ".join(reasons) if reasons else "no threats found",
             requires_attention=bool(reasons),
         )
-        await session.commit()
+        await uow.commit()
 
 
 async def extract_file_metadata(file_id: str) -> None:
-    async with async_session_maker() as session:
-        repository = StoredFileRepository(session)
+    async with UnitOfWork() as uow:
+        repository = uow.files_repo
         try:
             file_item = await repository.get_file(file_id)
         except EntityNotFoundError:
@@ -58,7 +57,7 @@ async def extract_file_metadata(file_id: str) -> None:
                 scan_status=file_item.scan_status or ScanStatus.FAILED,
                 scan_details="stored file not found during metadata extraction",
             )
-            await session.commit()
+            await uow.commit()
             return
 
         metadata = {
@@ -80,17 +79,17 @@ async def extract_file_metadata(file_id: str) -> None:
             processing_status=ProcessingStatus.PROCESSED,
             metadata_json=metadata,
         )
-        await session.commit()
+        await uow.commit()
 
 
 async def send_file_alert(file_id: str) -> None:
-    async with async_session_maker() as session:
-        file_repository = StoredFileRepository(session)
+    async with UnitOfWork() as uow:
+        file_repository = uow.files_repo
         try:
             file_item = await file_repository.get_file(file_id)
         except EntityNotFoundError:
             return
-        alert_repository = AlertRepository(session)
+        alert_repository = uow.alerts_repo
         if file_item.processing_status == ProcessingStatus.FAILED:
             await alert_repository.create_alert(
                 file_id=file_id, level="critical", message="File processing failed"
@@ -105,4 +104,4 @@ async def send_file_alert(file_id: str) -> None:
             await alert_repository.create_alert(
                 file_id=file_id, level="info", message="File processed successfully"
             )
-        await session.commit()
+        await uow.commit()

@@ -51,9 +51,11 @@ async def update_file_view(
 ):
     try:
         async with async_session_maker() as session:
-            return await StoredFileRepository(session).update_file(
+            file_item = await StoredFileRepository(session).update_file(
                 file_id=file_id, title=payload.title
             )
+            await session.commit()
+            return file_item
     except EntityNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -83,6 +85,7 @@ async def delete_file_view(file_id: str):
     try:
         async with async_session_maker() as session:
             await StoredFileRepository(session).delete_file(file_id)
+            await session.commit()
     except EntityNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

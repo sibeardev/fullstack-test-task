@@ -24,7 +24,7 @@ class AlertRepository(BaseRepository):
     async def create_alert(self, file_id: str, level: str, message: str) -> Alert:
         alert = Alert(file_id=file_id, level=level, message=message)
         self.session.add(alert)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(alert)
         return alert
 
@@ -38,7 +38,7 @@ class StoredFileRepository(BaseRepository):
 
     async def create_file(self, file: StoredFile) -> StoredFile:
         self.session.add(file)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(file)
         return file
 
@@ -54,7 +54,7 @@ class StoredFileRepository(BaseRepository):
             raise EntityNotFoundError("File not found")
         for key, value in kwargs.items():
             setattr(file_item, key, value)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(file_item)
         return file_item
 
@@ -66,4 +66,4 @@ class StoredFileRepository(BaseRepository):
         if stored_path.exists():
             stored_path.unlink()
         await self.session.delete(file_item)
-        await self.session.commit()
+        await self.session.flush()

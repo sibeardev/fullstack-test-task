@@ -39,6 +39,7 @@ async def scan_file_for_threats(file_id: str) -> None:
             scan_details=", ".join(reasons) if reasons else "no threats found",
             requires_attention=bool(reasons),
         )
+        await session.commit()
 
 
 async def extract_file_metadata(file_id: str) -> None:
@@ -57,6 +58,7 @@ async def extract_file_metadata(file_id: str) -> None:
                 scan_status=file_item.scan_status or ScanStatus.FAILED,
                 scan_details="stored file not found during metadata extraction",
             )
+            await session.commit()
             return
 
         metadata = {
@@ -78,6 +80,7 @@ async def extract_file_metadata(file_id: str) -> None:
             processing_status=ProcessingStatus.PROCESSED,
             metadata_json=metadata,
         )
+        await session.commit()
 
 
 async def send_file_alert(file_id: str) -> None:
@@ -102,3 +105,4 @@ async def send_file_alert(file_id: str) -> None:
             await alert_repository.create_alert(
                 file_id=file_id, level="info", message="File processed successfully"
             )
+        await session.commit()

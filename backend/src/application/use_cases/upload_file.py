@@ -38,4 +38,5 @@ async def create_file(title: str, upload_file: UploadFile) -> StoredFile:
                 processing_status=ProcessingStatus.UPLOADED,
             )
         )
+        await session.commit()
     return file_item

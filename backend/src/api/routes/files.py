@@ -63,7 +63,14 @@ async def update_file_view(
 
 @files_router.get("/{file_id}/download")
 async def download_file(file_id: str):
-    stored_file, stored_path = await get_file_path(file_id)
+    try:
+        stored_file, stored_path = await get_file_path(file_id)
+    except EntityNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found",
+        ) from exc
+
     return FileResponse(
         path=stored_path,
         media_type=stored_file.mime_type,

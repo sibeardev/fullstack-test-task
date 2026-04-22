@@ -4,7 +4,7 @@ from starlette import status
 
 from src.api.schemas.files import FileItem, FileUpdate
 from src.application.use_cases.upload_file import create_file
-from src.core.exceptions import EntityNotFoundError
+from src.core.exceptions import EntityNotFoundError, ValidationError
 from src.infrastructure.db.uow import UnitOfWork
 from src.infrastructure.storage.local_storage import get_file_path
 from src.workers.tasks import scan_file_for_threats_task
@@ -26,7 +26,13 @@ async def create_file_view(
     title: str = TITLE_FORM_PARAM,
     file: UploadFile = UPLOAD_FILE_PARAM,
 ):
-    file_item = await create_file(title=title, upload_file=file)
+    try:
+        file_item = await create_file(title=title, upload_file=file)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     scan_file_for_threats_task.delay(file_item.id)
     return file_item
 
